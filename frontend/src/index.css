@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-orange-500: #EA580C; /* vibrant orange */
+  --color-brand-orange-600: #C2410C;
+  --color-brand-blue-500: #3B82F6; /* accent blue */
+  --color-dark-bg: #050505;
+  --color-dark-surface: #111111;
+  --color-dark-card: #161616;
+  --color-dark-border: #2A2A2A;
+  
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-dark-bg);
+    color: #e5e5e5;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Base custom utilities used extensively */
+@layer utilities {
+  .btn-primary {
+    @apply flex items-center justify-center gap-2 px-6 py-3 bg-brand-orange-500 hover:bg-brand-orange-600 text-white font-semibold rounded-full transition-all duration-200;
+  }
+  .btn-secondary {
+    @apply flex items-center justify-center gap-2 px-6 py-3 bg-transparent border border-dark-border hover:bg-dark-surface text-gray-300 font-medium rounded-full transition-all duration-200;
+  }
+  .btn-danger {
+    @apply flex items-center justify-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-full transition-all duration-200;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 bg-dark-surface border border-dark-border rounded-xl text-gray-200 focus:outline-none focus:border-brand-orange-500 focus:ring-1 focus:ring-brand-orange-500 placeholder-gray-600 transition-colors;
+  }
+  .input-error {
+    @apply border-red-500 focus:border-red-500 focus:ring-red-500;
+  }
+  
+  .label {
+    @apply block text-sm font-medium text-gray-400 mb-1.5;
+  }
+  
+  .card {
+    @apply bg-dark-card border border-dark-border rounded-2xl;
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-to-r from-brand-orange-500 to-amber-500 bg-clip-text text-transparent;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-dark-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

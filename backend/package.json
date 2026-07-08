@@ -1,0 +1,14 @@
+{
+  "name": "nutritrack-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "NutriTrack AI Backend API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
