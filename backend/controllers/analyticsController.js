@@ -10,6 +10,14 @@ export const getAnalytics = asyncHandler(async (req, res) => {
   const { days = 7 } = req.query;
   const daysNum = Number(days);
 
+  // Helper: get local YYYY-MM-DD string to avoid UTC timezone mismatch
+  const toLocalDateString = (d) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - daysNum);
   startDate.setHours(0, 0, 0, 0);
@@ -19,12 +27,20 @@ export const getAnalytics = asyncHandler(async (req, res) => {
     mealDate: { $gte: startDate },
   }).sort('mealDate');
 
+  const previousStartDate = new Date(startDate);
+  previousStartDate.setDate(previousStartDate.getDate() - daysNum);
+
+  const previousMeals = await Meal.find({
+    user: req.user._id,
+    mealDate: { $gte: previousStartDate, $lt: startDate },
+  });
+
   // Daily breakdown
   const dailyData = {};
   for (let i = 0; i < daysNum; i++) {
     const date = new Date();
     date.setDate(date.getDate() - (daysNum - 1 - i));
-    const key = date.toISOString().split('T')[0];
+    const key = toLocalDateString(date);
     dailyData[key] = {
       date: key,
       calories: 0,
@@ -36,7 +52,7 @@ export const getAnalytics = asyncHandler(async (req, res) => {
   }
 
   meals.forEach((meal) => {
-    const key = new Date(meal.mealDate).toISOString().split('T')[0];
+    const key = toLocalDateString(new Date(meal.mealDate));
     if (dailyData[key]) {
       dailyData[key].calories += meal.calories;
       dailyData[key].protein += meal.protein;
@@ -89,11 +105,97 @@ export const getAnalytics = asyncHandler(async (req, res) => {
     averages,
   };
 
+  // Generate Intelligent Insights
+  const insights = [];
+  const goals = req.user.nutritionGoals;
+
+  if (goals) {
+    // 1. Protein Intake Check
+    if (averages.protein < goals.protein) {
+      const diff = Math.round(((goals.protein - averages.protein) / goals.protein) * 100);
+      if (diff > 0) insights.push({ type: 'warning', icon: 'Beef', text: `Protein intake is ${diff}% below your daily target on average.` });
+    } else if (averages.protein > 0) {
+      insights.push({ type: 'success', icon: 'Beef', text: `Great job! You are perfectly meeting your daily protein target.` });
+    }
+
+    // 2. Calorie Adherence
+    if (averages.calories > goals.calories) {
+      const diff = Math.round(((averages.calories - goals.calories) / goals.calories) * 100);
+      if (diff > 0) insights.push({ type: 'danger', icon: 'Flame', text: `You exceeded your daily calorie goal by ${diff}% on average.` });
+    }
+    
+    // 3. Healthiest Day (Closest to calorie goal)
+    let bestDay = null;
+    let smallestDiff = Infinity;
+    
+    dailyArray.forEach(d => {
+      if (d.calories > 0) {
+        const diff = Math.abs(d.calories - goals.calories);
+        if (diff < smallestDiff) {
+          smallestDiff = diff;
+          bestDay = d.date;
+        }
+      }
+    });
+
+    if (bestDay) {
+      // Create a local date string for display (ignoring UTC issue for display logic)
+      const [y, m, d] = bestDay.split('-');
+      const formattedDate = new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+      insights.push({ type: 'success', icon: 'Award', text: `Your healthiest balance this period was on ${formattedDate}.` });
+    }
+  }
+
+  // 4. Missing Breakfasts
+  const datesWithBreakfast = new Set(meals.filter(m => m.mealType === 'Breakfast').map(m => toLocalDateString(new Date(m.mealDate))));
+  const skippedBreakfastDays = daysNum - datesWithBreakfast.size;
+  if (skippedBreakfastDays > 0 && datesWithBreakfast.size > 0) {
+    insights.push({ type: 'info', icon: 'Coffee', text: `You missed logging breakfast on ${skippedBreakfastDays} day${skippedBreakfastDays > 1 ? 's' : ''}. Consistent mornings help metabolism!` });
+  } else if (datesWithBreakfast.size === 0 && meals.length > 0) {
+    insights.push({ type: 'info', icon: 'Coffee', text: `You haven't logged any breakfasts this period.` });
+  }
+
+  // 5. Compare Breakfast Trends
+  const prevBreakfasts = previousMeals.filter(m => m.mealType === 'Breakfast');
+  const prevBreakfastAvg = prevBreakfasts.length > 0 
+    ? prevBreakfasts.reduce((sum, m) => sum + m.calories, 0) / prevBreakfasts.length 
+    : 0;
+  
+  const currBreakfasts = meals.filter(m => m.mealType === 'Breakfast');
+  const currBreakfastAvg = currBreakfasts.length > 0 
+    ? currBreakfasts.reduce((sum, m) => sum + m.calories, 0) / currBreakfasts.length 
+    : 0;
+
+  if (prevBreakfastAvg > 0 && currBreakfastAvg > 0) {
+    const percentChange = Math.round(((currBreakfastAvg - prevBreakfastAvg) / prevBreakfastAvg) * 100);
+    if (percentChange > 5) {
+      insights.push({ type: 'warning', icon: 'TrendingUp', text: `Average breakfast calories increased by ${percentChange}% compared to the previous period.` });
+    } else if (percentChange < -5) {
+      insights.push({ type: 'success', icon: 'TrendingDown', text: `Average breakfast calories decreased by ${Math.abs(percentChange)}% compared to the previous period.` });
+    }
+  }
+  
+  // 6. Check Sodium (Mock Goal as user didn't have explicit sodium goal, use FDA guideline 2300mg)
+  const totalSodium = dailyArray.reduce((sum, d) => {
+    // We didn't aggregate sodium in dailyArray, so calculate it directly from meals
+    return sum; // Handled below
+  }, 0);
+  
+  const totalSodiumFromMeals = meals.reduce((sum, m) => sum + (m.sodium || 0), 0);
+  const activeDaysForSodium = dailyArray.filter(d => d.mealCount > 0).length || 1;
+  const avgSodium = Math.round(totalSodiumFromMeals / activeDaysForSodium);
+  
+  if (avgSodium > 2300) {
+    const excess = Math.round(((avgSodium - 2300) / 2300) * 100);
+    insights.push({ type: 'danger', icon: 'AlertTriangle', text: `You exceeded the recommended daily sodium (2300mg) by ${excess}% on average.` });
+  }
+
   res.json({
     success: true,
     daily: dailyArray,
     mealTypeDistribution,
     weeklySummary,
+    insights,
     period: daysNum,
   });
 });

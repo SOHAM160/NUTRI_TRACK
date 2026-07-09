@@ -39,3 +39,10 @@ export const uploadService = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
 };
+
+export const aiService = {
+  chat: (message, chatId) => api.post('/ai/chat', { message, chatId }),
+  getChats: () => api.get('/ai/chats'),
+  getChat: (id) => api.get(`/ai/chats/${id}`),
+  deleteChat: (id) => api.delete(`/ai/chats/${id}`),
+};

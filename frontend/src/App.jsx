@@ -9,6 +9,7 @@ import DashboardPage from './pages/dashboard/DashboardPage';
 import MealsPage from './pages/dashboard/MealsPage';
 import AnalyticsPage from './pages/dashboard/AnalyticsPage';
 import ProfilePage from './pages/dashboard/ProfilePage';
+import AiChatPage from './pages/dashboard/AiChatPage';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
               <Route path="meals" element={<MealsPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="profile" element={<ProfilePage />} />
+              <Route path="ai" element={<AiChatPage />} />
             </Route>
           </Route>
 

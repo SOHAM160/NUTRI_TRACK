@@ -102,13 +102,33 @@ export const createMeal = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const getMeals = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, search, mealType, startDate, endDate, sort = '-mealDate' } = req.query;
+  const {
+    page = 1,
+    limit = 10,
+    search,
+    mealName,
+    notes,
+    mealType,
+    startDate,
+    endDate,
+    minCalories,
+    maxCalories,
+    minProtein,
+    maxProtein,
+    sort = '-mealDate',
+  } = req.query;
 
   const query = { user: req.user._id };
 
   // Search by meal name
-  if (search) {
-    query.mealName = { $regex: search, $options: 'i' };
+  const foodSearch = search || mealName;
+  if (foodSearch) {
+    query.mealName = { $regex: foodSearch, $options: 'i' };
+  }
+
+  // Search by notes
+  if (notes) {
+    query.notes = { $regex: notes, $options: 'i' };
   }
 
   // Filter by meal type
@@ -121,6 +141,38 @@ export const getMeals = asyncHandler(async (req, res) => {
     query.mealDate = {};
     if (startDate) query.mealDate.$gte = new Date(startDate);
     if (endDate) query.mealDate.$lte = new Date(endDate + 'T23:59:59.999Z');
+  }
+
+  // Filter by Calories range
+  if (minCalories || maxCalories) {
+    query.calories = {};
+    if (minCalories) {
+      const min = Number(minCalories);
+      if (!isNaN(min)) query.calories.$gte = min;
+    }
+    if (maxCalories) {
+      const max = Number(maxCalories);
+      if (!isNaN(max)) query.calories.$lte = max;
+    }
+    if (Object.keys(query.calories).length === 0) {
+      delete query.calories;
+    }
+  }
+
+  // Filter by Protein range
+  if (minProtein || maxProtein) {
+    query.protein = {};
+    if (minProtein) {
+      const min = Number(minProtein);
+      if (!isNaN(min)) query.protein.$gte = min;
+    }
+    if (maxProtein) {
+      const max = Number(maxProtein);
+      if (!isNaN(max)) query.protein.$lte = max;
+    }
+    if (Object.keys(query.protein).length === 0) {
+      delete query.protein;
+    }
   }
 
   const total = await Meal.countDocuments(query);
