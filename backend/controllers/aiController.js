@@ -288,3 +288,99 @@ export const deleteChat = asyncHandler(async (req, res) => {
 
   res.json({ success: true, message: 'Chat deleted' });
 });
+
+/**
+ * @desc    Generate grocery list from meals using AI
+ * @route   POST /api/ai/generate-grocery
+ * @access  Private
+ */
+export const generateGroceryList = asyncHandler(async (req, res) => {
+  const { startDate, endDate } = req.body;
+
+  if (!startDate || !endDate) {
+    throw new ApiError(400, 'Start date and end date are required');
+  }
+
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
+  
+  const end = new Date(endDate);
+  end.setHours(23, 59, 59, 999);
+
+  const meals = await Meal.find({
+    user: req.user._id,
+    mealDate: { $gte: start, $lte: end },
+  });
+
+  if (meals.length === 0) {
+    return res.json({ success: true, groceryList: [] });
+  }
+
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    throw new ApiError(500, 'AI service is not configured');
+  }
+
+  const mealDescriptions = meals.map(
+    (m) => `- ${m.mealName} (Calories: ${m.calories}, Protein: ${m.protein}g, Carbs: ${m.carbs}g, Fat: ${m.fat}g)`
+  ).join('\n');
+
+  const prompt = `You are a helpful nutrition and meal-planning assistant. 
+The user has logged the following meals during their selected time period:
+${mealDescriptions}
+
+Based on these meals, please generate a practical, combined weekly grocery list. 
+Infer the likely raw ingredients required to prepare these meals. 
+Auto-combine duplicate ingredients (e.g., if chicken is in two meals, combine the amounts).
+Include realistic quantities (e.g., '2 kg', '18 eggs', '500 g').
+
+Return **ONLY** a valid JSON array of objects with the keys 'item' and 'quantity'. Do not include markdown formatting or any other text.
+Example format:
+[
+  { "item": "Chicken Breast", "quantity": "2 kg" },
+  { "item": "Eggs", "quantity": "18" }
+]
+`;
+
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.1, // low temp for JSON consistency
+        max_tokens: 1024,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new ApiError(502, 'AI service returned an error.');
+    }
+
+    const data = await response.json();
+    let aiResponse = data.choices?.[0]?.message?.content || '[]';
+    
+    // Attempt to strip out any markdown code blocks just in case
+    aiResponse = aiResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+    
+    let groceryList;
+    try {
+      groceryList = JSON.parse(aiResponse);
+    } catch (e) {
+      console.error('Failed to parse AI grocery response:', aiResponse);
+      groceryList = [];
+    }
+
+    res.json({
+      success: true,
+      groceryList,
+    });
+  } catch (error) {
+    console.error('Grocery Generation Error:', error);
+    throw new ApiError(502, 'Failed to generate grocery list. Please try again.');
+  }
+});

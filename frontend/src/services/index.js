@@ -46,3 +46,7 @@ export const aiService = {
   getChat: (id) => api.get(`/ai/chats/${id}`),
   deleteChat: (id) => api.delete(`/ai/chats/${id}`),
 };
+
+export const barcodeService = {
+  search: (barcode) => api.post('/barcode/search', { barcode }),
+};

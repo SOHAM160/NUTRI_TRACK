@@ -10,6 +10,7 @@ import MealsPage from './pages/dashboard/MealsPage';
 import AnalyticsPage from './pages/dashboard/AnalyticsPage';
 import ProfilePage from './pages/dashboard/ProfilePage';
 import AiChatPage from './pages/dashboard/AiChatPage';
+import GroceryPage from './pages/dashboard/GroceryPage';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
               <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="ai" element={<AiChatPage />} />
+              <Route path="grocery" element={<GroceryPage />} />
             </Route>
           </Route>
 

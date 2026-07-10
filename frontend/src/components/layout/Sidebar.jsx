@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, UtensilsCrossed, BarChart3, User, X, Activity, Sparkles } from 'lucide-react';
+import { LayoutDashboard, UtensilsCrossed, BarChart3, User, X, Activity, Sparkles, ShoppingCart } from 'lucide-react';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/dashboard/meals', icon: UtensilsCrossed, label: 'Meal Logging' },
   { to: '/dashboard/analytics', icon: BarChart3, label: 'Health Insights' },
   { to: '/dashboard/ai', icon: Sparkles, label: 'AI Nutritionist' },
+  { to: '/dashboard/grocery', icon: ShoppingCart, label: 'Grocery List' },
   { to: '/dashboard/profile', icon: User, label: 'Profile' },
 ];
 

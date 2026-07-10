@@ -12,6 +12,7 @@ import mealRoutes from './routes/mealRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
+import barcodeRoutes from './routes/barcodeRoutes.js';
 import path from 'path';
 
 dotenv.config();
@@ -95,6 +96,7 @@ app.use('/api/meals', mealRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/barcode', barcodeRoutes);
 
 // Error handling
 app.use(notFound);

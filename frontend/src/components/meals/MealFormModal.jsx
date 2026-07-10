@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X, Upload, Loader2, Image as ImageIcon } from 'lucide-react';
+import { X, Upload, Loader2, Image as ImageIcon, ScanBarcode } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { mealService } from '../../services';
 import { formatDateForInput } from '../../utils/helpers';
+import BarcodeScannerModal from './BarcodeScannerModal';
 
 const mealSchema = z.object({
   mealName: z.string().min(1, 'Meal name is required').max(100),
@@ -25,6 +26,7 @@ const MealFormModal = ({ isOpen, onClose, meal, onSuccess }) => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [loading, setLoading] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const isEditing = !!meal;
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -119,6 +121,25 @@ const MealFormModal = ({ isOpen, onClose, meal, onSuccess }) => {
     }
   };
 
+  const handleBarcodeFill = (product) => {
+    reset({
+      mealName: product.productName + (product.brand ? ` (${product.brand})` : ''),
+      mealType: 'Snack',
+      calories: product.calories || 0,
+      protein: product.protein || 0,
+      carbs: product.carbs || 0,
+      fat: product.fat || 0,
+      fiber: product.fiber || 0,
+      sugar: product.sugar || 0,
+      sodium: product.sodium || 0,
+      notes: `Barcode: ${product.barcode}. Serving: ${product.servingSize || '1 serving'}. Source: ${product.source === 'ai-estimated' ? 'AI estimated' : 'FatSecret'}`,
+      mealDate: formatDateForInput(new Date()),
+    });
+    if (product.imageUrl) {
+      setImagePreview(product.imageUrl);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -130,9 +151,21 @@ const MealFormModal = ({ isOpen, onClose, meal, onSuccess }) => {
           <h2 className="text-xl font-bold text-white tracking-tight">
             {isEditing ? 'Edit Meal Log' : 'Log New Meal'}
           </h2>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-dark-surface transition-colors text-gray-400 hover:text-white">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {!isEditing && (
+              <button
+                type="button"
+                onClick={() => setScannerOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-orange-500/10 border border-brand-orange-500/30 text-brand-orange-500 text-sm font-medium hover:bg-brand-orange-500/20 transition-colors"
+              >
+                <ScanBarcode className="w-4 h-4" />
+                Scan Barcode
+              </button>
+            )}
+            <button onClick={onClose} className="p-2 rounded-xl hover:bg-dark-surface transition-colors text-gray-400 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         <div className="overflow-y-auto p-8 flex-1">
@@ -220,6 +253,12 @@ const MealFormModal = ({ isOpen, onClose, meal, onSuccess }) => {
           </button>
         </div>
       </div>
+
+      <BarcodeScannerModal
+        isOpen={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onProductFound={handleBarcodeFill}
+      />
     </div>
   );
 };
