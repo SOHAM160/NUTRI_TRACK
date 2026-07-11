@@ -1,5 +1,5 @@
 import express from 'express';
-import { createMeal, getMeals, getMeal, updateMeal, deleteMeal, getTodayMeals } from '../controllers/mealController.js';
+import { createMeal, getMeals, getMeal, updateMeal, deleteMeal, getTodayMeals, getMealSuggestions } from '../controllers/mealController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
 
@@ -11,6 +11,8 @@ router.get('/today', getTodayMeals);
 router.route('/')
   .get(getMeals)
   .post(upload.single('image'), createMeal);
+
+router.get('/suggestions', getMealSuggestions);
 
 router.route('/:id')
   .get(getMeal)

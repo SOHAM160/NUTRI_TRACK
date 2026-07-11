@@ -4,6 +4,7 @@ import ApiError from '../utils/ApiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { uploadToCloudinary, deleteFromCloudinary } from '../services/cloudinaryService.js';
 import { sendGoalReachedEmail } from '../utils/emailService.js';
+import { evaluateStreak } from './streakController.js';
 
 const checkDailyGoals = async (userId) => {
   try {
@@ -23,13 +24,26 @@ const checkDailyGoals = async (userId) => {
     const totals = meals.reduce(
       (acc, meal) => ({
         calories: acc.calories + meal.calories,
+        protein: acc.protein + meal.protein,
+        carbs: acc.carbs + meal.carbs,
+        fat: acc.fat + meal.fat,
       }),
-      { calories: 0 }
+      { calories: 0, protein: 0, carbs: 0, fat: 0 }
     );
 
-    const calGoal = user.nutritionGoals.calories || 2000;
+    const goals = user.nutritionGoals || {};
+    const calGoal = goals.calories || 2000;
+    const proGoal = goals.protein || 150;
+    const carbGoal = goals.carbs || 250;
+    const fatGoal = goals.fat || 70;
+
+    const completedGoals = [];
+    if (totals.calories >= calGoal) completedGoals.push({ name: 'Calories', current: totals.calories, target: calGoal, unit: 'kcal' });
+    if (totals.protein >= proGoal) completedGoals.push({ name: 'Protein', current: totals.protein, target: proGoal, unit: 'g' });
+    if (totals.carbs >= carbGoal) completedGoals.push({ name: 'Carbs', current: totals.carbs, target: carbGoal, unit: 'g' });
+    if (totals.fat >= fatGoal) completedGoals.push({ name: 'Fat', current: totals.fat, target: fatGoal, unit: 'g' });
     
-    if (totals.calories >= calGoal) {
+    if (completedGoals.length > 0) {
       const lastNotified = user.lastGoalNotifiedDate;
       let alreadyNotifiedToday = false;
       
@@ -42,7 +56,7 @@ const checkDailyGoals = async (userId) => {
       }
 
       if (!alreadyNotifiedToday) {
-        await sendGoalReachedEmail(user.email, user.name, 'calories', totals.calories, calGoal);
+        await sendGoalReachedEmail(user.email, user.name, completedGoals);
         user.lastGoalNotifiedDate = new Date();
         await user.save();
       }
@@ -64,7 +78,7 @@ export const createMeal = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Meal name, type, and calories are required');
   }
 
-  let imageUrl = '';
+  let imageUrl = req.body.existingImage || '';
   if (req.file) {
     const result = await uploadToCloudinary(req.file.buffer, 'nutritrack/meals');
     imageUrl = result.secure_url;
@@ -88,6 +102,9 @@ export const createMeal = asyncHandler(async (req, res) => {
 
   // Check goals asynchronously
   checkDailyGoals(req.user._id);
+
+  // Evaluate streak
+  await evaluateStreak(req.user._id);
 
   res.status(201).json({
     success: true,
@@ -246,6 +263,9 @@ export const updateMeal = asyncHandler(async (req, res) => {
   // Check goals asynchronously
   checkDailyGoals(req.user._id);
 
+  // Evaluate streak
+  await evaluateStreak(req.user._id);
+
   res.json({
     success: true,
     message: 'Meal updated successfully',
@@ -271,6 +291,9 @@ export const deleteMeal = asyncHandler(async (req, res) => {
   }
 
   await meal.deleteOne();
+
+  // Re-evaluate streak after deletion
+  await evaluateStreak(req.user._id);
 
   res.json({ success: true, message: 'Meal deleted successfully' });
 });
@@ -308,4 +331,52 @@ export const getTodayMeals = asyncHandler(async (req, res) => {
     totals,
     count: meals.length,
   });
+});
+
+/**
+ * @desc    Get meal autocomplete suggestions from history
+ * @route   GET /api/meals/suggestions?query=...
+ * @access  Private
+ */
+export const getMealSuggestions = asyncHandler(async (req, res) => {
+  const { query } = req.query;
+  
+  if (!query || query.length < 2) {
+    return res.json({ success: true, suggestions: [] });
+  }
+
+  // Find most recent meals matching query, aggregate by mealName (case-insensitive)
+  const suggestions = await Meal.aggregate([
+    {
+      $match: {
+        user: req.user._id,
+        mealName: { $regex: query, $options: 'i' }
+      }
+    },
+    { $sort: { mealDate: -1 } },
+    {
+      $group: {
+        _id: { $toLower: "$mealName" },
+        mealName: { $first: "$mealName" },
+        mealType: { $first: "$mealType" },
+        calories: { $first: "$calories" },
+        protein: { $first: "$protein" },
+        carbs: { $first: "$carbs" },
+        fat: { $first: "$fat" },
+        fiber: { $first: "$fiber" },
+        sugar: { $first: "$sugar" },
+        sodium: { $first: "$sodium" },
+        image: { $first: "$image" }
+      }
+    },
+    { $limit: 5 }
+  ]);
+
+  // Rename _id as it was used for grouping
+  const formattedSuggestions = suggestions.map(s => {
+    const { _id, ...rest } = s;
+    return rest;
+  });
+
+  res.json({ success: true, suggestions: formattedSuggestions });
 });

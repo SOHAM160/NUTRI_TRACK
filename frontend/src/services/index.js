@@ -26,11 +26,13 @@ export const mealService = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
   deleteMeal: (id) => api.delete(`/meals/${id}`),
+  getSuggestions: (query) => api.get(`/meals/suggestions?query=${query}`),
 };
 
 export const analyticsService = {
   getAnalytics: (params) => api.get('/analytics', { params }),
   getDashboardSummary: () => api.get('/analytics/dashboard'),
+  getStreakData: () => api.get('/analytics/streaks'),
 };
 
 export const uploadService = {

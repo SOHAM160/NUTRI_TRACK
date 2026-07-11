@@ -4,19 +4,24 @@ import { useAuth } from '../../context/AuthContext';
 import { analyticsService } from '../../services';
 import StatCard from '../../components/ui/StatCard';
 import SkeletonCard from '../../components/ui/SkeletonCard';
-import { Flame, Beef, Wheat, Droplets, UtensilsCrossed, TrendingUp, Calendar } from 'lucide-react';
+import { Flame, Beef, Wheat, Droplets, UtensilsCrossed, TrendingUp, Calendar, Trophy, Zap, Target } from 'lucide-react';
 import { getGreeting, formatDate } from '../../utils/helpers';
 
 const DashboardPage = () => {
   const { user } = useAuth();
   const [data, setData] = useState(null);
+  const [streakData, setStreakData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const { data: res } = await analyticsService.getDashboardSummary();
-        setData(res);
+        const [dashRes, streakRes] = await Promise.all([
+          analyticsService.getDashboardSummary(),
+          analyticsService.getStreakData(),
+        ]);
+        setData(dashRes.data);
+        setStreakData(streakRes.data);
       } catch (err) {
         console.error('Dashboard fetch error:', err);
       } finally {
@@ -37,6 +42,10 @@ const DashboardPage = () => {
     );
   }
 
+  const currentStreak = streakData?.streak?.current || 0;
+  const longestStreak = streakData?.streak?.longest || 0;
+  const todayOnTrack = streakData?.todayOnTrack || false;
+
   return (
     <div className="space-y-8 animate-fade-in pb-10">
       {/* Header */}
@@ -52,7 +61,7 @@ const DashboardPage = () => {
         </Link>
       </div>
 
-      {/* Today's Stats Grid - using the distinct visual from NutriCal mock */}
+      {/* Today's Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         <StatCard icon={Flame} label="Calories Today" value={data?.today?.calories || 0} unit="kcal" color="orange" />
         <StatCard icon={Beef} label="Protein" value={data?.today?.protein || 0} unit="g" color="red" />
@@ -63,11 +72,74 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* Progress Bars and Analytics section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Dashboard Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
+        {/* Streak Card */}
+        <div className="card p-7 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-orange-500/20 to-orange-600/10 border border-brand-orange-500/30 flex items-center justify-center">
+                <Zap className="w-5 h-5 text-brand-orange-500" />
+              </div>
+              <h2 className="text-lg font-bold text-white">Goal Streak</h2>
+            </div>
+
+            <div className="flex items-center justify-center mb-8 mt-4">
+              <div className="relative">
+                {/* Streak ring */}
+                <div className={`w-32 h-32 rounded-full border-4 flex items-center justify-center ${
+                  currentStreak > 0 ? 'border-brand-orange-500 shadow-[0_0_25px_rgba(234,88,12,0.3)]' : 'border-dark-border'
+                }`}>
+                  <div className="text-center">
+                    <span className={`text-4xl font-extrabold ${currentStreak > 0 ? 'text-brand-orange-500' : 'text-gray-500'}`}>
+                      {currentStreak}
+                    </span>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {currentStreak === 1 ? 'day' : 'days'}
+                    </p>
+                  </div>
+                </div>
+                {/* Flame icon for active streaks */}
+                {currentStreak > 0 && (
+                  <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-brand-orange-500 flex items-center justify-center shadow-lg animate-pulse">
+                    <span className="text-sm">🔥</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex justify-between items-center py-2 px-3 rounded-lg bg-dark-surface border border-dark-border">
+              <span className="text-gray-400 text-sm flex items-center gap-2">
+                <Zap className="w-4 h-4" /> Current Streak
+              </span>
+              <span className="text-white font-bold">{currentStreak} {currentStreak === 1 ? 'day' : 'days'}</span>
+            </div>
+            <div className="flex justify-between items-center py-2 px-3 rounded-lg bg-dark-surface border border-dark-border">
+              <span className="text-gray-400 text-sm flex items-center gap-2">
+                <Trophy className="w-4 h-4" /> Longest Streak
+              </span>
+              <span className="text-white font-bold">{longestStreak} {longestStreak === 1 ? 'day' : 'days'}</span>
+            </div>
+            <div className="flex justify-between items-center py-2 px-3 rounded-lg bg-dark-surface border border-dark-border">
+              <span className="text-gray-400 text-sm flex items-center gap-2">
+                <Target className="w-4 h-4" /> Today's Status
+              </span>
+              <span className={`text-sm font-semibold px-2.5 py-1 rounded-full ${
+                todayOnTrack
+                  ? 'bg-green-500/10 text-green-400'
+                  : 'bg-yellow-500/10 text-yellow-400'
+              }`}>
+                {todayOnTrack ? '✓ On Track' : '○ In Progress'}
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* Daily Goals Progress */}
-        <div className="card p-7 lg:col-span-1">
+        <div className="card p-7">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-dark-surface border border-dark-border flex items-center justify-center">
               <Flame className="w-5 h-5 text-gray-300" />
@@ -99,7 +171,7 @@ const DashboardPage = () => {
           </div>
         </div>
         {/* Weekly Summary */}
-        <div className="card p-7 lg:col-span-1">
+        <div className="card p-7 flex flex-col justify-between">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-xl bg-dark-surface border border-dark-border flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-gray-300" />
@@ -125,7 +197,7 @@ const DashboardPage = () => {
         </div>
 
         {/* Recent Meals */}
-        <div className="card p-7 lg:col-span-1">
+        <div className="card p-7 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-lg font-bold text-white">Recent Meals</h2>
             <Link to="/dashboard/meals" className="text-sm font-semibold text-brand-orange-500 hover:text-brand-orange-600 transition-colors">

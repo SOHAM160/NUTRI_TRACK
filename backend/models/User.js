@@ -63,6 +63,12 @@ const userSchema = new mongoose.Schema({
   lastGoalNotifiedDate: {
     type: Date,
     default: null
+  },
+  streak: {
+    current: { type: Number, default: 0 },
+    longest: { type: Number, default: 0 },
+    lastSuccessDate: { type: Date, default: null },
+    isInitialized: { type: Boolean, default: false },
   }
 }, {
   timestamps: true,

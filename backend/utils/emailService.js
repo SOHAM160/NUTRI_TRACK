@@ -1,6 +1,6 @@
 import ApiError from './ApiError.js';
 
-export const sendGoalReachedEmail = async (email, name, goalType, currentValue, targetValue) => {
+export const sendGoalReachedEmail = async (email, name, completedGoals) => {
   const brevoApiKey = process.env.BREVO_API_KEY;
   const senderEmail = process.env.EMAIL_FROM;
 
@@ -9,10 +9,12 @@ export const sendGoalReachedEmail = async (email, name, goalType, currentValue, 
     return;
   }
 
+  const goalNames = completedGoals.map(g => g.name).join(', ');
+
   const payload = {
     sender: { email: senderEmail, name: 'NutriTrack' },
     to: [{ email, name }],
-    subject: `Congratulations! You've reached your ${goalType} goal for today! 🎉`,
+    subject: `Congratulations! You've reached your goals today! 🎉`,
     htmlContent: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
         <div style="background-color: #1a1a1a; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
@@ -21,12 +23,17 @@ export const sendGoalReachedEmail = async (email, name, goalType, currentValue, 
         <div style="background-color: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
           <h2 style="color: #333333; margin-top: 0;">Amazing job, ${name}!</h2>
           <p style="color: #666666; font-size: 16px; line-height: 1.5;">
-            You have successfully reached your <strong>${goalType}</strong> goal for today. Consistency is key to achieving your fitness objectives!
+            You have successfully reached your <strong>${goalNames}</strong> goals for today! Consistency is key to achieving your fitness objectives!
           </p>
           <div style="background-color: #fff3ed; border: 1px solid #ffd8c4; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;">
-            <p style="color: #d03000; font-size: 18px; font-weight: bold; margin: 0;">
-              ${currentValue} / ${targetValue} ${goalType === 'calories' ? 'kcal' : 'g'}
-            </p>
+            ${completedGoals.map(g => `
+              <div style="margin-bottom: 10px; padding: 10px; background-color: rgba(255, 255, 255, 0.8); border-radius: 6px;">
+                <span style="color: #666; font-size: 14px; text-transform: uppercase; font-weight: bold; margin-right: 15px;">${g.name}</span>
+                <span style="color: #d03000; font-size: 18px; font-weight: bold;">
+                  ${g.current} / ${g.target} ${g.unit}
+                </span>
+              </div>
+            `).join('')}
           </div>
           <p style="color: #666666; font-size: 16px; line-height: 1.5;">
             Keep up the fantastic work and stay on track with NutriTrack.

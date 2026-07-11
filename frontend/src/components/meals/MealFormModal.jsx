@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X, Upload, Loader2, Image as ImageIcon, ScanBarcode } from 'lucide-react';
+import { X, Upload, Loader2, Image as ImageIcon, ScanBarcode, UtensilsCrossed } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { mealService } from '../../services';
 import { formatDateForInput } from '../../utils/helpers';
@@ -27,9 +27,11 @@ const MealFormModal = ({ isOpen, onClose, meal, onSuccess }) => {
   const [imagePreview, setImagePreview] = useState('');
   const [loading, setLoading] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const isEditing = !!meal;
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm({
     resolver: zodResolver(mealSchema),
     defaultValues: {
       mealName: '',
@@ -45,6 +47,25 @@ const MealFormModal = ({ isOpen, onClose, meal, onSuccess }) => {
       mealDate: formatDateForInput(new Date()),
     },
   });
+
+  const watchMealName = watch('mealName');
+
+  // Fetch AI suggestions based on typing history
+  useEffect(() => {
+    if (!isEditing && watchMealName && watchMealName.length >= 2) {
+      const timeoutId = setTimeout(async () => {
+        try {
+          const res = await mealService.getSuggestions(watchMealName);
+          setSuggestions(res.data.suggestions || []);
+        } catch (error) {
+          console.error(error);
+        }
+      }, 300);
+      return () => clearTimeout(timeoutId);
+    } else {
+      setSuggestions([]);
+    }
+  }, [watchMealName, isEditing]);
 
   useEffect(() => {
     if (meal) {
@@ -102,13 +123,16 @@ const MealFormModal = ({ isOpen, onClose, meal, onSuccess }) => {
       });
       if (imageFile) {
         formData.append('image', imageFile);
+      } else if (imagePreview && !imagePreview.startsWith('blob:')) {
+        formData.append('existingImage', imagePreview);
       }
 
+      let response;
       if (isEditing) {
-        await mealService.updateMeal(meal._id, formData);
+        response = await mealService.updateMeal(meal._id, formData);
         toast.success('Meal updated successfully');
       } else {
-        await mealService.createMeal(formData);
+        response = await mealService.createMeal(formData);
         toast.success('Meal logged successfully');
       }
       
@@ -190,10 +214,58 @@ const MealFormModal = ({ isOpen, onClose, meal, onSuccess }) => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
+              <div className="relative">
                 <label className="label">Meal Name *</label>
-                <input {...register('mealName')} className={`input-field ${errors.mealName ? 'input-error' : ''}`} placeholder="e.g. Scrambled Eggs" />
+                <input 
+                  autoComplete="off"
+                  {...register('mealName')} 
+                  className={`input-field ${errors.mealName ? 'input-error' : ''}`} 
+                  placeholder="e.g. Scrambled Eggs" 
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 250)}
+                />
                 {errors.mealName && <p className="text-xs text-red-500 mt-1.5">{errors.mealName.message}</p>}
+                
+                {/* Suggestions Dropdown */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-dark-card border border-dark-border rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                    {suggestions.map((item, idx) => (
+                      <div 
+                        key={idx} 
+                        className="px-4 py-3 hover:bg-dark-surface cursor-pointer border-b border-dark-border last:border-0 flex items-center gap-3 transition-colors"
+                        onClick={() => {
+                          reset({
+                            mealName: item.mealName,
+                            mealType: item.mealType,
+                            calories: item.calories,
+                            protein: item.protein || 0,
+                            carbs: item.carbs || 0,
+                            fat: item.fat || 0,
+                            fiber: item.fiber || 0,
+                            sugar: item.sugar || 0,
+                            sodium: item.sodium || 0,
+                            notes: item.notes || '',
+                            mealDate: formatDateForInput(new Date()),
+                          });
+                          if(item.image) setImagePreview(item.image);
+                          setShowSuggestions(false);
+                        }}
+                      >
+                        {item.image ? (
+                           <img src={item.image} className="w-8 h-8 rounded-md object-cover" />
+                        ) : (
+                           <div className="w-8 h-8 rounded-md bg-dark-bg flex items-center justify-center shrink-0">
+                             <UtensilsCrossed className="w-4 h-4 text-gray-500" />
+                           </div>
+                        )}
+                        <div>
+                          <p className="text-sm font-semibold text-white truncate max-w-[200px]">{item.mealName}</p>
+                          <p className="text-xs text-brand-orange-500">{item.calories} kcal</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="label">Category *</label>
