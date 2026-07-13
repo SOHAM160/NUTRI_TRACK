@@ -37,11 +37,14 @@ const checkDailyGoals = async (userId) => {
     const carbGoal = goals.carbs || 250;
     const fatGoal = goals.fat || 70;
 
-    const completedGoals = [];
-    if (totals.calories >= calGoal) completedGoals.push({ name: 'Calories', current: totals.calories, target: calGoal, unit: 'kcal' });
-    if (totals.protein >= proGoal) completedGoals.push({ name: 'Protein', current: totals.protein, target: proGoal, unit: 'g' });
-    if (totals.carbs >= carbGoal) completedGoals.push({ name: 'Carbs', current: totals.carbs, target: carbGoal, unit: 'g' });
-    if (totals.fat >= fatGoal) completedGoals.push({ name: 'Fat', current: totals.fat, target: fatGoal, unit: 'g' });
+    const allGoalsProgress = [
+      { name: 'Calories', current: totals.calories, target: calGoal, unit: 'kcal' },
+      { name: 'Protein', current: totals.protein, target: proGoal, unit: 'g' },
+      { name: 'Carbs', current: totals.carbs, target: carbGoal, unit: 'g' },
+      { name: 'Fat', current: totals.fat, target: fatGoal, unit: 'g' },
+    ];
+    
+    const completedGoals = allGoalsProgress.filter(g => g.current >= g.target);
     
     if (completedGoals.length > 0) {
       const lastNotified = user.lastGoalNotifiedDate;
@@ -56,7 +59,7 @@ const checkDailyGoals = async (userId) => {
       }
 
       if (!alreadyNotifiedToday) {
-        await sendGoalReachedEmail(user.email, user.name, completedGoals);
+        await sendGoalReachedEmail(user.email, user.name, completedGoals, allGoalsProgress);
         user.lastGoalNotifiedDate = new Date();
         await user.save();
       }

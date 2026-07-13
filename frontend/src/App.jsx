@@ -11,6 +11,7 @@ import AnalyticsPage from './pages/dashboard/AnalyticsPage';
 import ProfilePage from './pages/dashboard/ProfilePage';
 import AiChatPage from './pages/dashboard/AiChatPage';
 import GroceryPage from './pages/dashboard/GroceryPage';
+import MealPlannerPage from './pages/dashboard/MealPlannerPage';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
               <Route path="profile" element={<ProfilePage />} />
               <Route path="ai" element={<AiChatPage />} />
               <Route path="grocery" element={<GroceryPage />} />
+              <Route path="meal-planner" element={<MealPlannerPage />} />
             </Route>
           </Route>
 

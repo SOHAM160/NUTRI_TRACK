@@ -1,6 +1,6 @@
 import ApiError from './ApiError.js';
 
-export const sendGoalReachedEmail = async (email, name, completedGoals) => {
+export const sendGoalReachedEmail = async (email, name, completedGoals, allGoalsProgress) => {
   const brevoApiKey = process.env.BREVO_API_KEY;
   const senderEmail = process.env.EMAIL_FROM;
 
@@ -10,6 +10,7 @@ export const sendGoalReachedEmail = async (email, name, completedGoals) => {
   }
 
   const goalNames = completedGoals.map(g => g.name).join(', ');
+  const statsToDisplay = allGoalsProgress || completedGoals;
 
   const payload = {
     sender: { email: senderEmail, name: 'NutriTrack' },
@@ -26,11 +27,11 @@ export const sendGoalReachedEmail = async (email, name, completedGoals) => {
             You have successfully reached your <strong>${goalNames}</strong> goals for today! Consistency is key to achieving your fitness objectives!
           </p>
           <div style="background-color: #fff3ed; border: 1px solid #ffd8c4; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;">
-            ${completedGoals.map(g => `
+            ${statsToDisplay.map(g => `
               <div style="margin-bottom: 10px; padding: 10px; background-color: rgba(255, 255, 255, 0.8); border-radius: 6px;">
                 <span style="color: #666; font-size: 14px; text-transform: uppercase; font-weight: bold; margin-right: 15px;">${g.name}</span>
-                <span style="color: #d03000; font-size: 18px; font-weight: bold;">
-                  ${g.current} / ${g.target} ${g.unit}
+                <span style="color: ${g.current >= g.target ? '#d03000' : '#475569'}; font-size: 18px; font-weight: bold;">
+                  ${g.current} / ${g.target} ${g.unit} ${g.current >= g.target ? '✅' : ''}
                 </span>
               </div>
             `).join('')}

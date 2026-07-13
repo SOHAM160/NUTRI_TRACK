@@ -9,6 +9,8 @@ import connectDB from './config/db.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 import authRoutes from './routes/authRoutes.js';
 import mealRoutes from './routes/mealRoutes.js';
+import mealPlanRoutes from './routes/mealPlanRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
@@ -93,6 +95,8 @@ app.get('/', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/meals', mealRoutes);
+app.use('/api/meal-plans', mealPlanRoutes);
+app.use('/api/reports', reportRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/ai', aiRoutes);
