@@ -65,12 +65,17 @@ export const generateReport = asyncHandler(async (req, res) => {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) throw new ApiError(500, 'AI service not configured');
 
+  const medConds = user.healthPreferences?.medicalConditions?.length > 0 ? user.healthPreferences.medicalConditions.join(', ') : 'None';
+  const allergies = user.healthPreferences?.allergies?.length > 0 ? user.healthPreferences.allergies.join(', ') : 'None';
+  const diets = user.healthPreferences?.dietaryRestrictions?.length > 0 ? user.healthPreferences.dietaryRestrictions.join(', ') : 'None';
+
   const prompt = `You are NutriTrack AI, an expert nutrition coach analyzing a ${type.toLowerCase()} report.
 Please provide personalized insights, identify eating patterns, point out nutritional imbalances, and recommend improvements based on the user's goals.
 Address the user directly in a professional, encouraging tone. Format strictly with markdown. Do not include markdown code block syntax (like \`\`\`markdown), just raw markdown text.
 
 User Profile:
 Goal: ${user.goal || 'Not specified'}
+Health Needs: Medical Conditions: ${medConds}, Allergies: ${allergies}, Diet Restrictions: ${diets}.
 Report Type: ${type} (${daysNum} days)
 Consistency (days tracking): ${consistency}%
 Avg Calories: ${avgCalories} (Target: ${goals.calories})

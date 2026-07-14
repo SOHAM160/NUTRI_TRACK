@@ -5,9 +5,11 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Pagination from '../../components/ui/Pagination';
 import EmptyState from '../../components/ui/EmptyState';
 import SkeletonCard from '../../components/ui/SkeletonCard';
-import { Plus, Search, UtensilsCrossed, Pencil, Trash2, Eye, Calendar, Flame, Beef, Wheat, Droplets, X, SlidersHorizontal } from 'lucide-react';
+import { Plus, Search, UtensilsCrossed, Pencil, Trash2, Eye, Calendar, Flame, Beef, Wheat, Droplets, X, SlidersHorizontal, BookmarkPlus, FolderHeart } from 'lucide-react';
 import { formatDate } from '../../utils/helpers';
 import toast from 'react-hot-toast';
+import AddToCollectionModal from '../../components/meals/AddToCollectionModal';
+import FavoritesCollectionModal from '../../components/meals/FavoritesCollectionModal';
 
 const MealsPage = () => {
   const [meals, setMeals] = useState([]);
@@ -31,6 +33,11 @@ const MealsPage = () => {
   const [viewMeal, setViewMeal] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  const [collectionModalOpen, setCollectionModalOpen] = useState(false);
+  const [addFavoriteModalOpen, setAddFavoriteModalOpen] = useState(false);
+  const [favoriteItemData, setFavoriteItemData] = useState(null);
+  const [prefillMealData, setPrefillMealData] = useState(null);
 
   const fetchMeals = useCallback(async (page = 1) => {
     setLoading(true);
@@ -114,9 +121,14 @@ const MealsPage = () => {
           <h1 className="text-3xl font-bold text-white tracking-tight">Meal Logging</h1>
           <p className="text-gray-400 mt-2">{pagination.total} meals in your history</p>
         </div>
-        <button onClick={() => setFormOpen(true)} className="btn-primary">
-          <Plus className="w-5 h-5" /> Add Meal
-        </button>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setCollectionModalOpen(true)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-dark-surface border border-dark-border text-gray-300 hover:text-brand-orange-500 hover:border-brand-orange-500/50 transition-all font-medium text-sm">
+            <FolderHeart className="w-5 h-5" /> Favorites & Collections
+          </button>
+          <button onClick={() => { setEditMeal(null); setPrefillMealData(null); setFormOpen(true); }} className="btn-primary">
+            <Plus className="w-5 h-5" /> Add Meal
+          </button>
+        </div>
       </div>
 
       <div className="card p-5 sm:p-6 space-y-4 relative z-10">
@@ -359,7 +371,10 @@ const MealsPage = () => {
                     <button onClick={() => setViewMeal(meal)} className="flex-1 btn-secondary !py-2.5 !text-sm">
                       <Eye className="w-4 h-4" /> View
                     </button>
-                    <button onClick={() => handleEdit(meal)} className="p-2.5 rounded-xl bg-dark-surface border border-dark-border text-gray-400 hover:text-white transition-colors">
+                    <button onClick={() => { setFavoriteItemData(meal); setAddFavoriteModalOpen(true); }} className="p-2.5 rounded-xl bg-dark-surface border border-dark-border text-gray-400 hover:text-brand-orange-500 hover:border-brand-orange-500/50 transition-all" title="Add to Favorites">
+                      <BookmarkPlus className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleEdit(meal)} className="p-2.5 rounded-xl bg-dark-surface border border-dark-border text-gray-400 hover:text-white transition-colors" title="Edit">
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button onClick={() => setDeleteId(meal._id)} className="p-2.5 rounded-xl bg-dark-surface border border-dark-border text-gray-400 hover:text-red-500 hover:border-red-500/50 transition-all">
@@ -434,7 +449,30 @@ const MealsPage = () => {
         </div>
       )}
 
-      <MealFormModal isOpen={formOpen} onClose={() => { setFormOpen(false); setEditMeal(null); }} meal={editMeal} onSuccess={() => fetchMeals(pagination.page)} />
+      <MealFormModal 
+        isOpen={formOpen} 
+        onClose={() => { setFormOpen(false); setEditMeal(null); setPrefillMealData(null); }} 
+        meal={editMeal} 
+        prefillData={prefillMealData}
+        onSuccess={() => fetchMeals(pagination.page)} 
+      />
+      
+      <AddToCollectionModal
+        isOpen={addFavoriteModalOpen}
+        onClose={() => { setAddFavoriteModalOpen(false); setFavoriteItemData(null); }}
+        itemData={favoriteItemData}
+        itemType="Meal"
+      />
+
+      <FavoritesCollectionModal
+        isOpen={collectionModalOpen}
+        onClose={() => setCollectionModalOpen(false)}
+        onLogMeal={(data) => {
+          setPrefillMealData(data);
+          setEditMeal(null);
+          setFormOpen(true);
+        }}
+      />
       
       <ConfirmDialog
         isOpen={!!deleteId}

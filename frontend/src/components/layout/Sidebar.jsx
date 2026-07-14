@@ -8,6 +8,7 @@ const navItems = [
   { to: '/dashboard/analytics', icon: BarChart3, label: 'Health Insights' },
   { to: '/dashboard/ai', icon: Sparkles, label: 'AI Nutritionist' },
   { to: '/dashboard/grocery', icon: ShoppingCart, label: 'Grocery List' },
+  { to: '/dashboard/gut-health', icon: Activity, label: 'Gut Health' },
   { to: '/dashboard/profile', icon: User, label: 'Profile' },
 ];
 

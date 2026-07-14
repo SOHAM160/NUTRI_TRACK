@@ -4,8 +4,37 @@ import { useAuth } from '../../context/AuthContext';
 import { analyticsService } from '../../services';
 import StatCard from '../../components/ui/StatCard';
 import SkeletonCard from '../../components/ui/SkeletonCard';
-import { Flame, Beef, Wheat, Droplets, UtensilsCrossed, TrendingUp, Calendar, Trophy, Zap, Target } from 'lucide-react';
+import { Flame, Beef, Wheat, Droplets, UtensilsCrossed, TrendingUp, Calendar, Trophy, Zap, Target, HeartPulse, CheckCircle2, XCircle } from 'lucide-react';
 import { getGreeting, formatDate } from '../../utils/helpers';
+
+const getRecommendations = (conditions) => {
+  if (!conditions || conditions.length === 0) return null;
+  const prefer = new Set();
+  const avoid = new Set();
+  
+  if (conditions.includes('Diabetes')) {
+    prefer.add('Oats & Quinoa'); prefer.add('Leafy Greens'); prefer.add('Lean Proteins');
+    avoid.add('Sugary Drinks'); avoid.add('Refined Carbs'); avoid.add('Sweets');
+  }
+  if (conditions.includes('Hypertension')) {
+    prefer.add('Potassium-rich fruits'); prefer.add('Whole Grains');
+    avoid.add('High Sodium Foods'); avoid.add('Canned Soups'); avoid.add('Processed Snacks');
+  }
+  if (conditions.includes('High Cholesterol')) {
+    prefer.add('Nuts & Seeds'); prefer.add('Fatty Fish'); prefer.add('Avocados');
+    avoid.add('Trans Fats'); avoid.add('Processed Meats'); avoid.add('Full-fat Dairy');
+  }
+  if (conditions.includes('PCOS')) {
+    prefer.add('High-fiber Veggies'); prefer.add('Berries');
+    avoid.add('Refined Sugars'); avoid.add('White Bread/Pasta');
+  }
+  if (conditions.includes('Kidney Disease')) {
+    prefer.add('Apples & Berries'); prefer.add('Cabbage & Cauliflower');
+    avoid.add('High-potassium Foods'); avoid.add('Processed Meats');
+  }
+
+  return { prefer: Array.from(prefer).slice(0, 4), avoid: Array.from(avoid).slice(0, 4) };
+};
 
 const DashboardPage = () => {
   const { user } = useAuth();
@@ -45,6 +74,8 @@ const DashboardPage = () => {
   const currentStreak = streakData?.streak?.current || 0;
   const longestStreak = streakData?.streak?.longest || 0;
   const todayOnTrack = streakData?.todayOnTrack || false;
+  
+  const recommendations = getRecommendations(user?.healthPreferences?.medicalConditions);
 
   return (
     <div className="space-y-8 animate-fade-in pb-10">
@@ -240,6 +271,51 @@ const DashboardPage = () => {
             </div>
           )}
         </div>
+        
+        {/* Health Recommendations */}
+        {recommendations && (
+          <div className="card p-7 flex flex-col justify-between lg:col-span-2">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-xl bg-dark-surface border border-dark-border flex items-center justify-center">
+                <HeartPulse className="w-5 h-5 text-red-500" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">Dietary Recommendations</h2>
+                <p className="text-sm text-gray-500">Based on your medical conditions</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-5">
+                <h3 className="text-sm font-bold text-green-400 uppercase tracking-widest flex items-center gap-2 mb-4">
+                  <CheckCircle2 className="w-4 h-4" /> Foods to Prefer
+                </h3>
+                <ul className="space-y-3">
+                  {recommendations.prefer.map((item, idx) => (
+                    <li key={idx} className="flex items-center gap-3 text-gray-300 text-sm">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0"></div>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-5">
+                <h3 className="text-sm font-bold text-red-400 uppercase tracking-widest flex items-center gap-2 mb-4">
+                  <XCircle className="w-4 h-4" /> Foods to Avoid
+                </h3>
+                <ul className="space-y-3">
+                  {recommendations.avoid.map((item, idx) => (
+                    <li key={idx} className="flex items-center gap-3 text-gray-300 text-sm">
+                      <div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></div>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

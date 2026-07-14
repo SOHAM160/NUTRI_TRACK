@@ -4,9 +4,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services';
-import { User, Lock, Upload, Loader2 } from 'lucide-react';
+import { User, Lock, Upload, Loader2, Heart } from 'lucide-react';
 import { activityLevelLabels, goalLabels, getInitials } from '../../utils/helpers';
 import toast from 'react-hot-toast';
+import MultiSelect from '../../components/ui/MultiSelect';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(50),
@@ -21,6 +22,11 @@ const profileSchema = z.object({
     protein: z.coerce.number().min(0).optional(),
     carbs: z.coerce.number().min(0).optional(),
     fat: z.coerce.number().min(0).optional(),
+  }).optional(),
+  healthPreferences: z.object({
+    medicalConditions: z.array(z.string()).optional(),
+    allergies: z.array(z.string()).optional(),
+    dietaryRestrictions: z.array(z.string()).optional(),
   }).optional(),
 });
 
@@ -39,11 +45,12 @@ const ProfilePage = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
 
-  const { register: registerProfile, handleSubmit: handleProfileSubmit, reset: resetProfile, formState: { errors: profileErrors } } = useForm({
+  const { register: registerProfile, handleSubmit: handleProfileSubmit, reset: resetProfile, formState: { errors: profileErrors }, setValue: setProfileValue, watch: watchProfile } = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: { 
       name: '', age: '', gender: '', height: '', weight: '', activityLevel: '', goal: '',
-      nutritionGoals: { calories: 2000, protein: 150, carbs: 250, fat: 70 }
+      nutritionGoals: { calories: 2000, protein: 150, carbs: 250, fat: 70 },
+      healthPreferences: { medicalConditions: [], allergies: [], dietaryRestrictions: [] }
     },
   });
 
@@ -60,6 +67,11 @@ const ProfilePage = () => {
           protein: user.nutritionGoals?.protein || 150,
           carbs: user.nutritionGoals?.carbs || 250,
           fat: user.nutritionGoals?.fat || 70,
+        },
+        healthPreferences: {
+          medicalConditions: user.healthPreferences?.medicalConditions || [],
+          allergies: user.healthPreferences?.allergies || [],
+          dietaryRestrictions: user.healthPreferences?.dietaryRestrictions || [],
         }
       });
     }
@@ -74,6 +86,7 @@ const ProfilePage = () => {
         height: data.height === '' ? undefined : Number(data.height),
         weight: data.weight === '' ? undefined : Number(data.weight),
         nutritionGoals: data.nutritionGoals,
+        healthPreferences: data.healthPreferences,
       };
       
       const { data: res } = await authService.updateProfile(cleanedData);
@@ -232,12 +245,74 @@ const ProfilePage = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end pt-6 mt-4 border-t border-dark-border">
+            <div className="flex justify-end pt-6 mt-4 border-t border-dark-border">
                 <button type="submit" className="btn-primary px-8" disabled={profileLoading}>
                   {profileLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Save Parameters'}
                 </button>
               </div>
             </form>
+          </div>
+
+          <div className="card p-8">
+            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-3 border-b border-dark-border pb-4">
+              <Heart className="w-5 h-5 text-red-500" />
+              Health Preferences
+            </h3>
+
+            <div className="space-y-6">
+              <div>
+                <label className="label">Medical Conditions</label>
+                <div className="text-xs text-gray-500 mb-2">Select any existing medical conditions to receive personalized AI advice and warnings.</div>
+                <MultiSelect
+                  options={[
+                    { value: 'Diabetes', label: 'Diabetes' },
+                    { value: 'Hypertension', label: 'Hypertension' },
+                    { value: 'High Cholesterol', label: 'High Cholesterol' },
+                    { value: 'PCOS', label: 'PCOS' },
+                    { value: 'Kidney Disease', label: 'Kidney Disease' }
+                  ]}
+                  value={watchProfile('healthPreferences.medicalConditions') || []}
+                  onChange={(val) => setProfileValue('healthPreferences.medicalConditions', val, { shouldDirty: true })}
+                  placeholder="Select conditions"
+                />
+              </div>
+
+              <div>
+                <label className="label">Dietary Restrictions</label>
+                <div className="text-xs text-gray-500 mb-2">Select your dietary type to tailor meal plans.</div>
+                <MultiSelect
+                  options={[
+                    { value: 'Vegan', label: 'Vegan' },
+                    { value: 'Vegetarian', label: 'Vegetarian' },
+                    { value: 'Gluten-Free', label: 'Gluten-Free' },
+                    { value: 'Dairy-Free', label: 'Dairy-Free' },
+                    { value: 'Keto', label: 'Keto' },
+                    { value: 'Paleo', label: 'Paleo' }
+                  ]}
+                  value={watchProfile('healthPreferences.dietaryRestrictions') || []}
+                  onChange={(val) => setProfileValue('healthPreferences.dietaryRestrictions', val, { shouldDirty: true })}
+                  placeholder="Select diets"
+                />
+              </div>
+              
+              <div>
+                <label className="label">Allergies</label>
+                <div className="text-xs text-gray-500 mb-2">Select common allergens to avoid them in AI recommendations.</div>
+                <MultiSelect
+                  options={[
+                    { value: 'Peanuts', label: 'Peanuts' },
+                    { value: 'Tree Nuts', label: 'Tree Nuts' },
+                    { value: 'Shellfish', label: 'Shellfish' },
+                    { value: 'Soy', label: 'Soy' },
+                    { value: 'Eggs', label: 'Eggs' },
+                    { value: 'Fish', label: 'Fish' }
+                  ]}
+                  value={watchProfile('healthPreferences.allergies') || []}
+                  onChange={(val) => setProfileValue('healthPreferences.allergies', val, { shouldDirty: true })}
+                  placeholder="Select allergies"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="card p-8">

@@ -87,6 +87,10 @@ const buildSystemPrompt = async (userId) => {
   const caloriesRemaining = Math.max(0, goals.calories - todayTotals.calories);
   const proteinRemaining = Math.max(0, goals.protein - todayTotals.protein);
 
+  const medConds = user.healthPreferences?.medicalConditions?.length > 0 ? user.healthPreferences.medicalConditions.join(', ') : 'None';
+  const allergies = user.healthPreferences?.allergies?.length > 0 ? user.healthPreferences.allergies.join(', ') : 'None';
+  const diets = user.healthPreferences?.dietaryRestrictions?.length > 0 ? user.healthPreferences.dietaryRestrictions.join(', ') : 'None';
+
   return `You are NutriTrack AI — a world-class, data-driven personal nutrition coach embedded in the NutriTrack app. You have direct access to the user's real-time meal data shown below.
 
 ═══ USER PROFILE ═══
@@ -95,6 +99,12 @@ Goal: ${user.goal || 'Not specified'}
 Age: ${user.age || 'N/A'} | Gender: ${user.gender || 'N/A'}
 Height: ${user.height ? user.height + ' cm' : 'N/A'} | Weight: ${user.weight ? user.weight + ' kg' : 'N/A'}
 Activity Level: ${user.activityLevel || 'N/A'}
+
+═══ HEALTH & DIETARY PREFERENCES (CRITICAL INSTRUCTIONS) ═══
+Medical Conditions: ${medConds}
+Dietary Restrictions: ${diets}
+Allergies: ${allergies}
+WARNING: You MUST NEVER recommend any foods that violate their allergies! Ensure all recommendations align perfectly with their medical conditions and dietary restrictions.
 
 ═══ DAILY NUTRITION TARGETS ═══
 Calories: ${goals.calories} kcal | Protein: ${goals.protein}g | Carbs: ${goals.carbs}g | Fat: ${goals.fat}g

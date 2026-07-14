@@ -52,3 +52,17 @@ export const aiService = {
 export const barcodeService = {
   search: (barcode) => api.post('/barcode/search', { barcode }),
 };
+
+export const favoriteService = {
+  getFavorites: (params) => api.get('/favorites', { params }),
+  getFolders: () => api.get('/favorites/folders'),
+  addFavorite: (data) => api.post('/favorites', data),
+  updateFavorite: (id, data) => api.put(`/favorites/${id}`, data),
+  deleteFavorite: (id) => api.delete(`/favorites/${id}`),
+};
+
+export const gutHealthService = {
+  logSymptoms: (data) => api.post('/gut-health', data),
+  getHistory: () => api.get('/gut-health'),
+  getInsights: () => api.get('/gut-health/insights'),
+};

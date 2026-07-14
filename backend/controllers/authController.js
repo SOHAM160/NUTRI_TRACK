@@ -109,7 +109,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'User not found');
   }
 
-  const { name, age, gender, height, weight, activityLevel, goal, nutritionGoals } = req.body;
+  const { name, age, gender, height, weight, activityLevel, goal, nutritionGoals, healthPreferences } = req.body;
 
   if (name !== undefined) user.name = name;
   if (age !== undefined) user.age = age;
@@ -123,6 +123,11 @@ export const updateProfile = asyncHandler(async (req, res) => {
     if (nutritionGoals.protein !== undefined) user.nutritionGoals.protein = nutritionGoals.protein;
     if (nutritionGoals.carbs !== undefined) user.nutritionGoals.carbs = nutritionGoals.carbs;
     if (nutritionGoals.fat !== undefined) user.nutritionGoals.fat = nutritionGoals.fat;
+  }
+  if (healthPreferences !== undefined) {
+    if (healthPreferences.medicalConditions !== undefined) user.healthPreferences.medicalConditions = healthPreferences.medicalConditions;
+    if (healthPreferences.allergies !== undefined) user.healthPreferences.allergies = healthPreferences.allergies;
+    if (healthPreferences.dietaryRestrictions !== undefined) user.healthPreferences.dietaryRestrictions = healthPreferences.dietaryRestrictions;
   }
 
   const updatedUser = await user.save();

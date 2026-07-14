@@ -69,6 +69,11 @@ const userSchema = new mongoose.Schema({
     longest: { type: Number, default: 0 },
     lastSuccessDate: { type: Date, default: null },
     isInitialized: { type: Boolean, default: false },
+  },
+  healthPreferences: {
+    medicalConditions: [{ type: String }],
+    allergies: [{ type: String }],
+    dietaryRestrictions: [{ type: String }]
   }
 }, {
   timestamps: true,

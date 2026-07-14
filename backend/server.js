@@ -15,6 +15,8 @@ import analyticsRoutes from './routes/analyticsRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import barcodeRoutes from './routes/barcodeRoutes.js';
+import favoriteRoutes from './routes/favoriteRoutes.js';
+import gutHealthRoutes from './routes/gutHealthRoutes.js';
 import path from 'path';
 
 dotenv.config();
@@ -101,6 +103,8 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/barcode', barcodeRoutes);
+app.use('/api/favorites', favoriteRoutes);
+app.use('/api/gut-health', gutHealthRoutes);
 
 // Error handling
 app.use(notFound);

@@ -42,8 +42,13 @@ export const generatePlan = asyncHandler(async (req, res) => {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) throw new ApiError(500, 'AI service is not configured');
 
+  const medConds = user.healthPreferences?.medicalConditions?.length > 0 ? user.healthPreferences.medicalConditions.join(', ') : 'None';
+  const allergies = user.healthPreferences?.allergies?.length > 0 ? user.healthPreferences.allergies.join(', ') : 'None';
+  const diets = user.healthPreferences?.dietaryRestrictions?.length > 0 ? user.healthPreferences.dietaryRestrictions.join(', ') : 'None';
+
   const prompt = `You are an expert AI meal planner.
 User Profile: Age ${user.age || 'N/A'}, Height ${user.height || 'N/A'}cm, Weight ${user.weight || 'N/A'}kg, Activity Level ${user.activityLevel || 'N/A'}, Fitness Goal ${user.goal || 'N/A'}.
+Health Needs: Medical Conditions: ${medConds}, Allergies: ${allergies}, Diet Restrictions: ${diets}. NEVER recommend foods violating allergies or medical constraints!
 Diet Preference: ${dietPreference}
 Total Target Macros: Cals: ${goals.calories}, Protein: ${goals.protein}g, Carbs: ${goals.carbs}g, Fat: ${goals.fat}g.
 Already consumed today: Cals: ${todayTotals.calories}, Protein: ${todayTotals.protein}g, Carbs: ${todayTotals.carbs}g, Fat: ${todayTotals.fat}g.
@@ -109,7 +114,13 @@ export const regenerateSingleMeal = asyncHandler(async (req, res) => {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) throw new ApiError(500, 'AI service is not configured');
 
+  const user = await User.findById(req.user._id);
+  const medConds = user.healthPreferences?.medicalConditions?.length > 0 ? user.healthPreferences.medicalConditions.join(', ') : 'None';
+  const allergies = user.healthPreferences?.allergies?.length > 0 ? user.healthPreferences.allergies.join(', ') : 'None';
+  const diets = user.healthPreferences?.dietaryRestrictions?.length > 0 ? user.healthPreferences.dietaryRestrictions.join(', ') : 'None';
+
   const prompt = `You are an expert AI meal planner.
+Health Needs: Medical Conditions: ${medConds}, Allergies: ${allergies}, Diet Restrictions: ${diets}. NEVER recommend foods violating allergies or medical constraints!
 Diet Preference: ${dietPreference}
 Target Macros for this meal: Cals: ${targetCalories}, Protein: ${targetProtein}g, Carbs: ${targetCarbs}g, Fat: ${targetFat}g.
 

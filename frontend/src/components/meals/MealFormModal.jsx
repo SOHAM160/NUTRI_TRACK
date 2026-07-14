@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X, Upload, Loader2, Image as ImageIcon, ScanBarcode, UtensilsCrossed } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { X, Upload, Loader2, Image as ImageIcon, ScanBarcode, UtensilsCrossed, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { mealService } from '../../services';
 import { formatDateForInput } from '../../utils/helpers';
@@ -22,13 +23,15 @@ const mealSchema = z.object({
   mealDate: z.string().min(1, 'Date is required'),
 });
 
-const MealFormModal = ({ isOpen, onClose, meal, onSuccess }) => {
+const MealFormModal = ({ isOpen, onClose, meal, prefillData, onSuccess }) => {
+  const { user } = useAuth();
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [loading, setLoading] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [warnings, setWarnings] = useState([]);
   const isEditing = !!meal;
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm({
@@ -49,6 +52,29 @@ const MealFormModal = ({ isOpen, onClose, meal, onSuccess }) => {
   });
 
   const watchMealName = watch('mealName');
+  const watchSugar = watch('sugar');
+  const watchSodium = watch('sodium');
+  const watchFat = watch('fat');
+  const watchProtein = watch('protein');
+
+  useEffect(() => {
+    const newWarnings = [];
+    const conditions = user?.healthPreferences?.medicalConditions || [];
+    
+    if (conditions.includes('Diabetes') && Number(watchSugar) > 15) {
+      newWarnings.push('High sugar content. Exercise caution with Diabetes.');
+    }
+    if (conditions.includes('Hypertension') && Number(watchSodium) > 400) {
+      newWarnings.push('High sodium content. Not recommended for Hypertension.');
+    }
+    if (conditions.includes('High Cholesterol') && Number(watchFat) > 20) {
+      newWarnings.push('High fat content. Watch out for your High Cholesterol.');
+    }
+    if (conditions.includes('Kidney Disease') && Number(watchProtein) > 35) {
+      newWarnings.push('High protein portion. Please manage for Kidney Disease.');
+    }
+    setWarnings(newWarnings);
+  }, [watchSugar, watchSodium, watchFat, watchProtein, user]);
 
   // Fetch AI suggestions based on typing history
   useEffect(() => {
@@ -83,6 +109,21 @@ const MealFormModal = ({ isOpen, onClose, meal, onSuccess }) => {
         mealDate: formatDateForInput(meal.mealDate),
       });
       setImagePreview(meal.image || '');
+    } else if (prefillData) {
+      reset({
+        mealName: prefillData.mealName || '',
+        mealType: prefillData.mealType || 'Breakfast',
+        calories: prefillData.calories || 0,
+        protein: prefillData.protein || 0,
+        carbs: prefillData.carbs || 0,
+        fat: prefillData.fat || 0,
+        fiber: prefillData.fiber || 0,
+        sugar: prefillData.sugar || 0,
+        sodium: prefillData.sodium || 0,
+        notes: prefillData.notes || '',
+        mealDate: formatDateForInput(new Date()),
+      });
+      setImagePreview(prefillData.image || '');
     } else {
       reset({
         mealName: '',
@@ -100,7 +141,7 @@ const MealFormModal = ({ isOpen, onClose, meal, onSuccess }) => {
       setImagePreview('');
     }
     setImageFile(null);
-  }, [meal, reset, isOpen]);
+  }, [meal, prefillData, reset, isOpen]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -316,11 +357,22 @@ const MealFormModal = ({ isOpen, onClose, meal, onSuccess }) => {
           </form>
         </div>
 
+        {warnings.length > 0 && (
+          <div className="px-8 pb-4 space-y-2">
+            {warnings.map((w, i) => (
+              <div key={i} className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-xl flex items-start gap-2 animate-fade-in">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <p>{w}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="flex gap-4 justify-end px-8 py-5 border-t border-dark-border bg-dark-bg/50 shrink-0">
           <button type="button" onClick={onClose} className="text-sm font-semibold text-gray-400 hover:text-white transition-colors" disabled={loading}>
             Cancel
           </button>
-          <button type="submit" form="meal-form" className="btn-primary" disabled={loading}>
+          <button type="submit" form="meal-form" className={`btn-primary ${warnings.length > 0 ? 'opacity-50 cursor-not-allowed grayscale' : ''}`} disabled={loading || warnings.length > 0}>
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : isEditing ? 'Save Changes' : 'Log Meal'}
           </button>
         </div>
