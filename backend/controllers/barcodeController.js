@@ -42,7 +42,7 @@ const getFatSecretToken = async () => {
   cachedToken = data.access_token;
   tokenExpiry = Date.now() + (data.expires_in || 86400) * 1000;
 
-  console.log('[FATSECRET] Access token obtained successfully');
+  // console.log('[FATSECRET] Access token obtained successfully');
   return cachedToken;
 };
 
@@ -173,7 +173,7 @@ export const searchBarcode = asyncHandler(async (req, res) => {
 
   try {
     // ─── Step 1: Find food_id by barcode in FatSecret ───
-    console.log(`[BARCODE] Looking up barcode: ${cleanBarcode} in FatSecret`);
+    // console.log(`[BARCODE] Looking up barcode: ${cleanBarcode} in FatSecret`);
 
     let foodId = null;
     let productName = '';
@@ -186,12 +186,12 @@ export const searchBarcode = asyncHandler(async (req, res) => {
 
     if (barcodeResult?.food_id) {
       foodId = barcodeResult.food_id.value || barcodeResult.food_id;
-      console.log(`[BARCODE] Found food_id: ${foodId} in FatSecret`);
+      // console.log(`[BARCODE] Found food_id: ${foodId} in FatSecret`);
     }
 
     // ─── Step 1.5: If FatSecret doesn't have the barcode, ask Open Food Facts for the name and image ───
     if (!foodId) {
-      console.log(`[BARCODE] Not found in FatSecret. Asking Open Food Facts for the product name...`);
+      // console.log(`[BARCODE] Not found in FatSecret. Asking Open Food Facts for the product name...`);
       try {
         const offRes = await fetch(`https://world.openfoodfacts.org/api/v2/product/${cleanBarcode}.json`);
         if (offRes.ok) {
@@ -199,7 +199,7 @@ export const searchBarcode = asyncHandler(async (req, res) => {
           if (offData.status === 1 && offData.product) {
             productName = offData.product.product_name || offData.product.product_name_en || '';
             imageUrl = offData.product.image_front_url || offData.product.image_url || '';
-            console.log(`[BARCODE] Open Food Facts resolved name: "${productName}"`);
+            // console.log(`[BARCODE] Open Food Facts resolved name: "${productName}"`);
           }
         }
       } catch (e) {
@@ -230,13 +230,13 @@ export const searchBarcode = asyncHandler(async (req, res) => {
                        '1 serving';
         }
 
-        console.log(`[BARCODE] FatSecret food: ${productName} (${brand})`);
+        // console.log(`[BARCODE] FatSecret food: ${productName} (${brand})`);
       }
     }
 
     // ─── Step 3: If no foodId, but we got the name from OFF, search FatSecret by name ───
     if (!foodId && productName) {
-      console.log(`[BARCODE] Searching FatSecret for product name: "${productName}"`);
+      // console.log(`[BARCODE] Searching FatSecret for product name: "${productName}"`);
 
       // take only the first 2-3 words for better search hits
       const searchQuery = productName.split(' ').slice(0, 3).join(' ');
@@ -256,7 +256,7 @@ export const searchBarcode = asyncHandler(async (req, res) => {
         // Keep the OFF name as it might be more specific, but get brand from FatSecret
         brand = firstFood.brand_name || '';
 
-        console.log(`[BARCODE] Found FatSecret match: ${firstFood.food_name}`);
+        // console.log(`[BARCODE] Found FatSecret match: ${firstFood.food_name}`);
 
         const foodResult = await callFatSecretAPI('food.get.v4', {
           food_id: String(foodId),
@@ -276,7 +276,7 @@ export const searchBarcode = asyncHandler(async (req, res) => {
     if (!nutrition || (nutrition.calories === 0 && nutrition.protein === 0)) {
       if (!productName) productName = `Product (barcode: ${cleanBarcode})`;
 
-      console.log(`[BARCODE] No FatSecret data. Falling back to AI for "${productName}"`);
+      // console.log(`[BARCODE] No FatSecret data. Falling back to AI for "${productName}"`);
 
       const aiEstimate = await estimateNutritionWithAI(productName);
       if (aiEstimate) {
@@ -320,7 +320,7 @@ export const searchBarcode = asyncHandler(async (req, res) => {
       source,
     };
 
-    console.log(`[BARCODE] Final result (source: ${source}):`, result);
+    // console.log(`[BARCODE] Final result (source: ${source}):`, result);
 
     res.json({
       success: true,

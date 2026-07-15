@@ -92,7 +92,7 @@ Example: [{"mealType": "Breakfast", "mealName": "Oatmeal", "calories": 300, "pro
     try {
       generatedMeals = JSON.parse(aiResponse);
     } catch(e) {
-      console.log('AI Response Parsing failed. Raw:', aiResponse);
+      // console.log('AI Response Parsing failed. Raw:', aiResponse);
       throw new ApiError(500, 'Failed to parse AI generated meal plan');
     }
 

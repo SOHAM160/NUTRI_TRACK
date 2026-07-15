@@ -11,7 +11,8 @@ export const uploadToCloudinary = (fileBuffer, folder = 'nutritrack') => {
     if (!process.env.CLOUDINARY_API_KEY || process.env.CLOUDINARY_API_KEY === 'your_api_key') {
       const fileName = `local_${Date.now()}.jpg`;
       fs.writeFileSync(path.join(process.cwd(), 'uploads', fileName), fileBuffer);
-      return resolve({ secure_url: `http://localhost:${process.env.PORT || 5000}/uploads/${fileName}` });
+      const serverUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`;
+      return resolve({ secure_url: `${serverUrl}/uploads/${fileName}` });
     }
     const stream = cloudinary.uploader.upload_stream(
       {

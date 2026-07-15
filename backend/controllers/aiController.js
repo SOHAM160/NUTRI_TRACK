@@ -192,7 +192,7 @@ export const aiChat = asyncHandler(async (req, res) => {
 
   try {
     // Call Groq API
-    console.log(`[AI SERVICE] Sending request to Groq API using key: ${apiKey.substring(0, 8)}...`);
+    // console.log(`[AI SERVICE] Sending request to Groq API using key: ${apiKey.substring(0, 8)}...`);
     const startTime = Date.now();
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -222,8 +222,8 @@ export const aiChat = asyncHandler(async (req, res) => {
     const data = await response.json();
     const elapsedTime = Date.now() - startTime;
     
-    console.log(`[AI SERVICE] Received response from Groq API in ${elapsedTime}ms`);
-    console.log(`[AI SERVICE] Token usage - Prompt: ${data.usage?.prompt_tokens}, Completion: ${data.usage?.completion_tokens}`);
+    // console.log(`[AI SERVICE] Received response from Groq API in ${elapsedTime}ms`);
+    // console.log(`[AI SERVICE] Token usage - Prompt: ${data.usage?.prompt_tokens}, Completion: ${data.usage?.completion_tokens}`);
 
     const aiResponse = data.choices?.[0]?.message?.content;
 
