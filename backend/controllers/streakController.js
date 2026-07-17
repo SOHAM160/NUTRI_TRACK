@@ -1,6 +1,7 @@
 import Meal from '../models/Meal.js';
 import User from '../models/User.js';
 import asyncHandler from '../utils/asyncHandler.js';
+import { getTodayRange } from '../utils/timezone.js';
 
 
 /**
@@ -24,7 +25,8 @@ const isDaySuccessful = (intake, goals) => {
 /**
  * Calculate daily totals for a specific date
  */
-const getDailyTotals = async (userId, date) => {
+const getDailyTotals = async (userId, date, tz) => {
+  // If date is already a range boundary from getTodayRange, use it directly
   const start = new Date(date);
   start.setHours(0, 0, 0, 0);
   const end = new Date(start);
@@ -218,10 +220,11 @@ export const getStreakData = asyncHandler(async (req, res) => {
   if (!user.streak || !user.streak.isInitialized) {
     user = await initHistoricalStreak(user._id);
   }
+  const tz = req.headers['x-timezone'] || undefined;
 
   // Also compute today's goal progress for the response
-  const today = toMidnight(new Date());
-  const todayTotals = await getDailyTotals(req.user._id, today);
+  const { today } = getTodayRange(tz);
+  const todayTotals = await getDailyTotals(req.user._id, today, tz);
   const goals = user.nutritionGoals;
 
   const goalProgress = {

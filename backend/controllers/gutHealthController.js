@@ -3,16 +3,10 @@ import Meal from '../models/Meal.js';
 import User from '../models/User.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import ApiError from '../utils/ApiError.js';
+import { getDaysAgoRange, toLocalDateString } from '../utils/timezone.js';
 
 const PROBIOTIC_KEYWORDS = ['yogurt', 'kefir', 'kombucha', 'sauerkraut', 'kimchi', 'miso', 'tempeh', 'pickles'];
 const PREBIOTIC_KEYWORDS = ['garlic', 'onion', 'leek', 'asparagus', 'banana', 'oat', 'apple', 'flaxseed', 'chia', 'barley', 'bean', 'lentil'];
-
-const toLocalDateString = (d) => {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
 
 export const logSymptoms = asyncHandler(async (req, res) => {
   const { logDate, symptoms, notes } = req.body;
@@ -103,11 +97,10 @@ export const getGutHealthHistory = asyncHandler(async (req, res) => {
 
 export const getGutHealthInsights = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
+  const tz = req.headers['x-timezone'] || undefined;
   
   // Last 7 days
-  const periodStart = new Date();
-  periodStart.setDate(periodStart.getDate() - 7);
-  periodStart.setHours(0, 0, 0, 0);
+  const periodStart = getDaysAgoRange(tz, 7);
 
   const logs = await GutHealthLog.find({
     user: req.user._id,
@@ -124,8 +117,8 @@ export const getGutHealthInsights = asyncHandler(async (req, res) => {
   }
 
   // Format context
-  const mealContext = meals.map(m => `Date: ${toLocalDateString(new Date(m.mealDate))} - ${m.mealType}: ${m.mealName} (Fiber: ${m.fiber}g)`).join('\n');
-  const symptomContext = logs.map(l => `Date: ${toLocalDateString(new Date(l.logDate))} - Symptoms: ${l.symptoms.map(s => s.type + '(' + s.severity + '/10)').join(', ')} - Notes: ${l.notes}`).join('\n');
+  const mealContext = meals.map(m => `Date: ${toLocalDateString(new Date(m.mealDate), tz)} - ${m.mealType}: ${m.mealName} (Fiber: ${m.fiber}g)`).join('\n');
+  const symptomContext = logs.map(l => `Date: ${toLocalDateString(new Date(l.logDate), tz)} - Symptoms: ${l.symptoms.map(s => s.type + '(' + s.severity + '/10)').join(', ')} - Notes: ${l.notes}`).join('\n');
 
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) throw new ApiError(500, 'AI service not configured');

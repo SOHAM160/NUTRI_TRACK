@@ -5,16 +5,14 @@ import asyncHandler from '../utils/asyncHandler.js';
 import { uploadToCloudinary, deleteFromCloudinary } from '../services/cloudinaryService.js';
 import { sendGoalReachedEmail } from '../utils/emailService.js';
 import { evaluateStreak } from './streakController.js';
+import { getTodayRange } from '../utils/timezone.js';
 
-const checkDailyGoals = async (userId) => {
+const checkDailyGoals = async (userId, tz) => {
   try {
     const user = await User.findById(userId);
     if (!user || !user.nutritionGoals) return;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const { today, tomorrow } = getTodayRange(tz);
 
     const meals = await Meal.find({
       user: userId,
@@ -104,7 +102,7 @@ export const createMeal = asyncHandler(async (req, res) => {
   });
 
   // Check goals asynchronously
-  checkDailyGoals(req.user._id);
+  checkDailyGoals(req.user._id, req.headers['x-timezone']);
 
   // Evaluate streak
   await evaluateStreak(req.user._id);
@@ -264,7 +262,7 @@ export const updateMeal = asyncHandler(async (req, res) => {
   });
 
   // Check goals asynchronously
-  checkDailyGoals(req.user._id);
+  checkDailyGoals(req.user._id, req.headers['x-timezone']);
 
   // Evaluate streak
   await evaluateStreak(req.user._id);
@@ -307,10 +305,7 @@ export const deleteMeal = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const getTodayMeals = asyncHandler(async (req, res) => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const { today, tomorrow } = getTodayRange(req.headers['x-timezone']);
 
   const meals = await Meal.find({
     user: req.user._id,

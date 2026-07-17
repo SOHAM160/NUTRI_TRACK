@@ -1,5 +1,6 @@
 import Meal from '../models/Meal.js';
 import asyncHandler from '../utils/asyncHandler.js';
+import { getTodayRange, getDaysAgoRange, toLocalDateString } from '../utils/timezone.js';
 
 /**
  * @desc    Get analytics data
@@ -9,18 +10,9 @@ import asyncHandler from '../utils/asyncHandler.js';
 export const getAnalytics = asyncHandler(async (req, res) => {
   const { days = 7 } = req.query;
   const daysNum = Number(days);
+  const tz = req.headers['x-timezone'] || undefined;
 
-  // Helper: get local YYYY-MM-DD string to avoid UTC timezone mismatch
-  const toLocalDateString = (d) => {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - daysNum);
-  startDate.setHours(0, 0, 0, 0);
+  const startDate = getDaysAgoRange(tz, daysNum);
 
   const meals = await Meal.find({
     user: req.user._id,
@@ -40,7 +32,7 @@ export const getAnalytics = asyncHandler(async (req, res) => {
   for (let i = 0; i < daysNum; i++) {
     const date = new Date();
     date.setDate(date.getDate() - (daysNum - 1 - i));
-    const key = toLocalDateString(date);
+    const key = toLocalDateString(date, tz);
     dailyData[key] = {
       date: key,
       calories: 0,
@@ -52,7 +44,7 @@ export const getAnalytics = asyncHandler(async (req, res) => {
   }
 
   meals.forEach((meal) => {
-    const key = toLocalDateString(new Date(meal.mealDate));
+    const key = toLocalDateString(new Date(meal.mealDate), tz);
     if (dailyData[key]) {
       dailyData[key].calories += meal.calories;
       dailyData[key].protein += meal.protein;
@@ -147,7 +139,7 @@ export const getAnalytics = asyncHandler(async (req, res) => {
   }
 
   // 4. Missing Breakfasts
-  const datesWithBreakfast = new Set(meals.filter(m => m.mealType === 'Breakfast').map(m => toLocalDateString(new Date(m.mealDate))));
+  const datesWithBreakfast = new Set(meals.filter(m => m.mealType === 'Breakfast').map(m => toLocalDateString(new Date(m.mealDate), tz)));
   const skippedBreakfastDays = daysNum - datesWithBreakfast.size;
   if (skippedBreakfastDays > 0 && datesWithBreakfast.size > 0) {
     insights.push({ type: 'info', icon: 'Coffee', text: `You missed logging breakfast on ${skippedBreakfastDays} day${skippedBreakfastDays > 1 ? 's' : ''}. Consistent mornings help metabolism!` });
@@ -206,11 +198,9 @@ export const getAnalytics = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const getDashboardSummary = asyncHandler(async (req, res) => {
+  const tz = req.headers['x-timezone'] || undefined;
   // Today's data
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const { today, tomorrow } = getTodayRange(tz);
 
   const todayMeals = await Meal.find({
     user: req.user._id,
@@ -228,9 +218,7 @@ export const getDashboardSummary = asyncHandler(async (req, res) => {
   );
 
   // Weekly data (last 7 days)
-  const weekStart = new Date();
-  weekStart.setDate(weekStart.getDate() - 7);
-  weekStart.setHours(0, 0, 0, 0);
+  const weekStart = getDaysAgoRange(tz, 7);
 
   const weekMeals = await Meal.find({
     user: req.user._id,

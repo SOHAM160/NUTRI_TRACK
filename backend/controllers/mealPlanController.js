@@ -3,6 +3,7 @@ import User from '../models/User.js';
 import Meal from '../models/Meal.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import ApiError from '../utils/ApiError.js';
+import { getTodayRange } from '../utils/timezone.js';
 
 export const generatePlan = asyncHandler(async (req, res) => {
   const { dietPreference, mealsToGenerate } = req.body; // e.g. ['Breakfast', 'Lunch']
@@ -13,10 +14,7 @@ export const generatePlan = asyncHandler(async (req, res) => {
 
   const user = await User.findById(req.user._id);
   
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const { today, tomorrow } = getTodayRange(req.headers['x-timezone']);
 
   const todayMeals = await Meal.find({
     user: req.user._id,

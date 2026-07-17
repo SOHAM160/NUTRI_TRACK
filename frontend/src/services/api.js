@@ -10,6 +10,15 @@ const api = axios.create({
   },
 });
 
+// Request interceptor — attach user timezone
+api.interceptors.request.use((config) => {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (tz) {
+    config.headers['x-timezone'] = tz;
+  }
+  return config;
+});
+
 // Response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,

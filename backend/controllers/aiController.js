@@ -3,28 +3,16 @@ import User from '../models/User.js';
 import Chat from '../models/Chat.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import ApiError from '../utils/ApiError.js';
-
-/**
- * Helper: get local YYYY-MM-DD string
- */
-const toLocalDateString = (d) => {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
+import { getTodayRange, getDaysAgoRange, toLocalDateString } from '../utils/timezone.js';
 
 /**
  * Build a rich system prompt from the user's real data
  */
-const buildSystemPrompt = async (userId) => {
+const buildSystemPrompt = async (userId, tz) => {
   const user = await User.findById(userId);
 
   // Today's meals
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const { today, tomorrow } = getTodayRange(tz);
 
   const todayMeals = await Meal.find({
     user: userId,
@@ -32,9 +20,7 @@ const buildSystemPrompt = async (userId) => {
   });
 
   // This week's meals
-  const weekStart = new Date();
-  weekStart.setDate(weekStart.getDate() - 7);
-  weekStart.setHours(0, 0, 0, 0);
+  const weekStart = getDaysAgoRange(tz, 7);
 
   const weekMeals = await Meal.find({
     user: userId,
@@ -73,7 +59,7 @@ const buildSystemPrompt = async (userId) => {
     { calories: 0, protein: 0, carbs: 0, fat: 0 }
   );
 
-  const daysWithMeals = new Set(weekMeals.map((m) => toLocalDateString(new Date(m.mealDate)))).size || 1;
+  const daysWithMeals = new Set(weekMeals.map((m) => toLocalDateString(new Date(m.mealDate), tz))).size || 1;
   const weekAvg = {
     calories: Math.round(weekTotals.calories / daysWithMeals),
     protein: Math.round(weekTotals.protein / daysWithMeals),
@@ -109,7 +95,7 @@ WARNING: You MUST NEVER recommend any foods that violate their allergies! Ensure
 ═══ DAILY NUTRITION TARGETS ═══
 Calories: ${goals.calories} kcal | Protein: ${goals.protein}g | Carbs: ${goals.carbs}g | Fat: ${goals.fat}g
 
-═══ TODAY'S INTAKE (${toLocalDateString(new Date())}) ═══
+═══ TODAY'S INTAKE (${toLocalDateString(new Date(), tz)}) ═══
 Meals logged: ${todayMeals.length}
 ${todayMealNames.length > 0 ? todayMealNames.join('\n') : '(No meals logged yet today)'}
 
@@ -182,7 +168,7 @@ export const aiChat = asyncHandler(async (req, res) => {
   chat.messages.push({ role: 'user', content: message });
 
   // Build context
-  const systemPrompt = await buildSystemPrompt(req.user._id);
+  const systemPrompt = await buildSystemPrompt(req.user._id, req.headers['x-timezone']);
 
   // Build conversation history for multi-turn (last 10 messages for context window)
   const recentMessages = chat.messages.slice(-10).map((m) => ({
