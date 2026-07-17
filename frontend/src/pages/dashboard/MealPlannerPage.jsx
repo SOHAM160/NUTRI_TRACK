@@ -106,7 +106,7 @@ const MealPlannerPage = () => {
       formData.append('protein', meal.protein);
       formData.append('carbs', meal.carbs);
       formData.append('fat', meal.fat);
-      formData.append('notes', 'Logged via AI Meal Planner');
+      formData.append('notes', 'Logged via Meal Planner');
       formData.append('mealDate', formatDateForInput(new Date()));
       
       await api.post('/meals', formData, {
@@ -165,10 +165,10 @@ const MealPlannerPage = () => {
             <span className="p-2 bg-brand-orange-500/10 rounded-xl">
               <Calendar className="w-6 h-6 text-brand-orange-500" />
             </span>
-            AI Meal Planner
+            Meal Planner
           </h1>
           <p className="text-gray-400 mt-2 text-sm sm:text-base max-w-2xl">
-            Automatically generate a structured meal plan powered by AI, tailored exactly to your active remaining macros.
+            Automatically generate a structured meal plan tailored exactly to your active remaining macros.
           </p>
         </div>
       </div>
@@ -252,7 +252,7 @@ const MealPlannerPage = () => {
           {generatedMeals.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-white">Your AI Generated Plan</h3>
+                <h3 className="text-xl font-bold text-white">Your Generated Plan</h3>
                 <button 
                   onClick={handleSavePlan}
                   disabled={savingLoading}

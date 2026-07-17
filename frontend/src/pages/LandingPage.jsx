@@ -49,7 +49,7 @@ const LandingPage = () => {
           </p>
 
           <div className="flex flex-wrap justify-center gap-4 mb-16">
-             <span className="px-4 py-2 rounded-full border border-dark-border bg-dark-surface/50 text-gray-400 text-sm">AI Nutrition Tracking</span>
+             <span className="px-4 py-2 rounded-full border border-dark-border bg-dark-surface/50 text-gray-400 text-sm">Smart Nutrition Tracking</span>
              <span className="px-4 py-2 rounded-full border border-dark-border bg-dark-surface/50 text-gray-400 text-sm">Meal Logging</span>
              <span className="px-4 py-2 rounded-full border border-dark-border bg-dark-surface/50 text-gray-400 text-sm">Personalized Diet Plans</span>
              <span className="px-4 py-2 rounded-full border border-dark-border bg-dark-surface/50 text-gray-400 text-sm">Food Photo Recognition</span>

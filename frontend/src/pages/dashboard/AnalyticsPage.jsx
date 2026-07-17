@@ -379,7 +379,7 @@ const AnalyticsPage = () => {
         </div>
       )}
 
-      {/* AI Nutrition Reports Section */}
+      {/* Nutrition Reports Section */}
       <div className="mt-12 pt-8 border-t border-dark-border print:hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
@@ -388,7 +388,7 @@ const AnalyticsPage = () => {
             </div>
             <div>
               <h2 className="text-xl font-bold text-white tracking-tight">Nutrition Reports</h2>
-              <p className="text-gray-400 text-sm">Generate AI-powered comprehensive reports</p>
+              <p className="text-gray-400 text-sm">Generate comprehensive nutrition reports</p>
             </div>
           </div>
           
@@ -407,7 +407,7 @@ const AnalyticsPage = () => {
               className="btn-primary flex items-center gap-2 py-2.5"
             >
               {generatingReport ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-              {generatingReport ? 'Generating...' : 'Generate AI Report'}
+              {generatingReport ? 'Generating...' : 'Generate Report'}
             </button>
           </div>
         </div>
@@ -436,7 +436,7 @@ const AnalyticsPage = () => {
           ) : (
             <div className="col-span-full text-center py-12 bg-dark-surface/30 rounded-2xl border border-dark-border border-dashed">
               <p className="text-gray-500 mb-2 font-medium">No reports generated yet</p>
-              <p className="text-gray-600 text-sm">Create your first AI insight report above</p>
+              <p className="text-gray-600 text-sm">Create your first insight report above</p>
             </div>
           )}
         </div>
@@ -450,7 +450,7 @@ const AnalyticsPage = () => {
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-dark-border shrink-0 print:hidden sticky top-0 bg-dark-card z-10">
                <div>
-                  <h3 className="text-xl font-bold tracking-tight text-white">{selectedReport.type} AI Report</h3>
+                  <h3 className="text-xl font-bold tracking-tight text-white">{selectedReport.type} Report</h3>
                   <p className="text-xs text-gray-400">{new Date(selectedReport.createdAt).toLocaleString()}</p>
                </div>
                <div className="flex gap-2">
@@ -493,7 +493,7 @@ const AnalyticsPage = () => {
                <div className="bg-dark-surface/30 p-6 rounded-xl border border-dark-border/50 print:bg-transparent print:border-none print:p-0">
                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 print:text-black print:mb-2">
                     <Sparkles className="w-5 h-5 text-brand-orange-500 print:text-black" /> 
-                    AI Coach Analysis
+                    Coach Analysis
                  </h3>
                  <div 
                     className="text-gray-300 leading-relaxed text-sm whitespace-pre-wrap print:text-black report-markdown"

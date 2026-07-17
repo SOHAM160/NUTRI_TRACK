@@ -133,7 +133,7 @@ const AiChatPage = () => {
         isError: true,
       };
       setMessages((prev) => [...prev, errorMessage]);
-      toast.error('Failed to get AI response');
+      toast.error('Failed to get response');
     } finally {
       setLoading(false);
       inputRef.current?.focus();
@@ -280,7 +280,7 @@ const AiChatPage = () => {
             <Sparkles className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-white tracking-tight">AI Nutritionist</h1>
+            <h1 className="text-lg font-bold text-white tracking-tight">Nutritionist</h1>
             <p className="text-xs text-gray-500">Analyzes your real meal data</p>
           </div>
         </div>
@@ -392,7 +392,7 @@ const AiChatPage = () => {
             </button>
           </div>
           <p className="text-[11px] text-gray-600 text-center mt-2">
-            Powered by AI • Responses are based on your logged meal data
+            Powered by NutriCal • Responses are based on your logged meal data
           </p>
         </div>
       </div>

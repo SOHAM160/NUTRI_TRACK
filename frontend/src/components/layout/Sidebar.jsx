@@ -4,9 +4,9 @@ import { LayoutDashboard, UtensilsCrossed, BarChart3, User, X, Activity, Sparkle
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/dashboard/meals', icon: UtensilsCrossed, label: 'Meal Logging' },
-  { to: '/dashboard/meal-planner', icon: Calendar, label: 'AI Meal Planner' },
+  { to: '/dashboard/meal-planner', icon: Calendar, label: 'Meal Planner' },
   { to: '/dashboard/analytics', icon: BarChart3, label: 'Health Insights' },
-  { to: '/dashboard/ai', icon: Sparkles, label: 'AI Nutritionist' },
+  { to: '/dashboard/ai', icon: Sparkles, label: 'Nutritionist' },
   { to: '/dashboard/grocery', icon: ShoppingCart, label: 'Grocery List' },
   { to: '/dashboard/gut-health', icon: Activity, label: 'Gut Health' },
   { to: '/dashboard/profile', icon: User, label: 'Profile' },

@@ -262,7 +262,7 @@ const ProfilePage = () => {
             <div className="space-y-6">
               <div>
                 <label className="label">Medical Conditions</label>
-                <div className="text-xs text-gray-500 mb-2">Select any existing medical conditions to receive personalized AI advice and warnings.</div>
+                <div className="text-xs text-gray-500 mb-2">Select any existing medical conditions to receive personalized advice and warnings.</div>
                 <MultiSelect
                   options={[
                     { value: 'Diabetes', label: 'Diabetes' },
@@ -297,7 +297,7 @@ const ProfilePage = () => {
               
               <div>
                 <label className="label">Allergies</label>
-                <div className="text-xs text-gray-500 mb-2">Select common allergens to avoid them in AI recommendations.</div>
+                <div className="text-xs text-gray-500 mb-2">Select common allergens to avoid them in recommendations.</div>
                 <MultiSelect
                   options={[
                     { value: 'Peanuts', label: 'Peanuts' },

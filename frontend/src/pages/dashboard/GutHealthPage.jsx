@@ -236,7 +236,7 @@ const GutHealthPage = () => {
           </div>
         </div>
         
-        {/* Right Col: Charts & AI Insights */}
+        {/* Right Col: Charts & Insights */}
         <div className="lg:col-span-2 space-y-8">
           
           {/* Chart */}
@@ -271,12 +271,12 @@ const GutHealthPage = () => {
             </div>
           </div>
           
-          {/* AI Insights Card */}
+          {/* Insights Card */}
           <div className="card overflow-hidden">
             <div className="bg-gradient-to-r from-brand-orange-500/10 to-brand-blue-500/10 border-b border-dark-border p-6 flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <Sparkles className="w-5 h-5 text-brand-orange-500" />
-                <h2 className="text-lg font-bold text-white">AI Microbiome Analysis</h2>
+                <h2 className="text-lg font-bold text-white">Microbiome Analysis</h2>
               </div>
               <button onClick={fetchInsights} disabled={insightsLoading} className="text-xs font-semibold text-brand-orange-500 max-w-max hover:bg-brand-orange-500/10 px-3 py-1.5 rounded-lg transition-colors">
                 {insightsLoading ? 'Analyzing...' : 'Refresh'}
